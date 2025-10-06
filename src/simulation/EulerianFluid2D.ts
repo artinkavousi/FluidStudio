@@ -43,13 +43,21 @@ export class EulerianFluid2D {
   }
 
   reset() {
+    this.clearVelocity();
+    this.clearDye();
+    this.curl.fill(0);
+  }
+
+  clearDye() {
+    this.density.fill(0);
+    this.densityPrev.fill(0);
+  }
+
+  clearVelocity() {
     this.velocityX.fill(0);
     this.velocityY.fill(0);
     this.velocityXPrev.fill(0);
     this.velocityYPrev.fill(0);
-    this.density.fill(0);
-    this.densityPrev.fill(0);
-    this.curl.fill(0);
   }
 
   step(dt: number) {

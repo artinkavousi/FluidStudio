@@ -110,15 +110,20 @@ export class ParamStore {
     this.notify();
   }
 
-  setAudioActive(active: boolean) {
+  updateAudio(partial: Partial<AudioParameters>) {
     this._state = {
       ...this._state,
       audio: {
         ...this._state.audio,
-        active
+        ...partial
       }
     };
     this.notify();
+  }
+
+  setAudioActive(active: boolean) {
+    if (this._state.audio.active === active) return;
+    this.updateAudio({ active });
   }
 
   private notify() {

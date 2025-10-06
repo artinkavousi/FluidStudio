@@ -1,7 +1,7 @@
 export class AudioAnalyser {
   private context: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
-  private dataArray: Float32Array<ArrayBuffer> | null = null;
+  private dataArray: Float32Array | null = null;
   private smoothing = 0.6;
   private gain = 1.0;
   private active = false;
@@ -19,7 +19,7 @@ export class AudioAnalyser {
 
     this.context = context;
     this.analyser = analyser;
-    this.dataArray = new Float32Array(analyser.frequencyBinCount) as Float32Array<ArrayBuffer>;
+    this.dataArray = new Float32Array(analyser.frequencyBinCount);
     this.active = true;
     this.notifyActivation(true);
   }
@@ -46,7 +46,7 @@ export class AudioAnalyser {
 
   getBandValue(index: number): number {
     if (!this.analyser || !this.dataArray) return 0;
-    const buffer = this.dataArray as Float32Array<ArrayBuffer>;
+    const buffer = this.dataArray;
     this.analyser.getFloatFrequencyData(buffer);
     const clampedIndex = Math.min(Math.max(index, 0), buffer.length - 1);
     const db = buffer[clampedIndex];
