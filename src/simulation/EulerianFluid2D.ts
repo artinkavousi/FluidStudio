@@ -17,6 +17,7 @@ export class EulerianFluid2D {
 
   private density: Float32Array;
   private densityPrev: Float32Array;
+  private curl: Float32Array;
 
   constructor(config: SimulationParameters) {
     this.config = config;
@@ -29,6 +30,7 @@ export class EulerianFluid2D {
     this.velocityYPrev = new Float32Array(this.gridSize);
     this.density = new Float32Array(this.gridSize);
     this.densityPrev = new Float32Array(this.gridSize);
+    this.curl = new Float32Array(this.gridSize);
   }
 
   updateConfig(config: SimulationParameters) {
@@ -47,6 +49,7 @@ export class EulerianFluid2D {
     this.velocityYPrev.fill(0);
     this.density.fill(0);
     this.densityPrev.fill(0);
+    this.curl.fill(0);
   }
 
   step(dt: number) {
@@ -59,6 +62,7 @@ export class EulerianFluid2D {
 
     this.advect(1, this.velocityX, this.velocityXPrev, this.velocityXPrev, this.velocityYPrev, dt);
     this.advect(2, this.velocityY, this.velocityYPrev, this.velocityXPrev, this.velocityYPrev, dt);
+    this.applyVorticityConfinement(this.velocityX, this.velocityY, dt);
     this.project(this.velocityX, this.velocityY, this.velocityXPrev, this.velocityYPrev);
 
     this.diffuse(0, this.densityPrev, this.density, diff, dt);
@@ -117,6 +121,7 @@ export class EulerianFluid2D {
     this.velocityYPrev = new Float32Array(this.gridSize);
     this.density = new Float32Array(this.gridSize);
     this.densityPrev = new Float32Array(this.gridSize);
+    this.curl = new Float32Array(this.gridSize);
   }
 
   private applyDissipation() {
@@ -214,6 +219,41 @@ export class EulerianFluid2D {
       }
       this.setBounds(b, x);
     }
+  }
+
+  private applyVorticityConfinement(velocX: Float32Array, velocY: Float32Array, dt: number) {
+    const epsilon = this.config.curlStrength;
+    if (epsilon <= 0) return;
+
+    const N = this.size;
+    const curl = this.curl;
+
+    for (let j = 1; j <= N; j++) {
+      for (let i = 1; i <= N; i++) {
+        const index = this.IX(i, j);
+        const dw_dy = velocY[this.IX(i + 1, j)] - velocY[this.IX(i - 1, j)];
+        const du_dx = velocX[this.IX(i, j + 1)] - velocX[this.IX(i, j - 1)];
+        curl[index] = 0.5 * (dw_dy - du_dx);
+      }
+    }
+
+    for (let j = 1; j <= N; j++) {
+      for (let i = 1; i <= N; i++) {
+        const index = this.IX(i, j);
+        let Nx = (Math.abs(curl[this.IX(i + 1, j)]) - Math.abs(curl[this.IX(i - 1, j)])) * 0.5;
+        let Ny = (Math.abs(curl[this.IX(i, j + 1)]) - Math.abs(curl[this.IX(i, j - 1)])) * 0.5;
+        const length = Math.hypot(Nx, Ny) + 1e-5;
+        Nx /= length;
+        Ny /= length;
+        const vorticity = curl[index];
+        const force = epsilon * vorticity;
+        velocX[index] += Ny * -force * dt;
+        velocY[index] += Nx * force * dt;
+      }
+    }
+
+    this.setBounds(1, velocX);
+    this.setBounds(2, velocY);
   }
 
   private setBounds(b: number, x: Float32Array) {
