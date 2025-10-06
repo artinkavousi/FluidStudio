@@ -46,7 +46,7 @@ export class AudioAnalyser {
 
   getBandValue(index: number): number {
     if (!this.analyser || !this.dataArray) return 0;
-    const buffer = this.dataArray;
+    const buffer = this.dataArray as Float32Array<ArrayBuffer>;
     this.analyser.getFloatFrequencyData(buffer);
     const clampedIndex = Math.min(Math.max(index, 0), buffer.length - 1);
     const db = buffer[clampedIndex];
