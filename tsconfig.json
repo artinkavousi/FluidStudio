@@ -10,7 +10,8 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "types": ["dom-screen-wake-lock"],
+    "lib": ["ES2021", "DOM", "DOM.Iterable"],
+    "types": ["dom-screen-wake-lock", "@webgpu/types"],
     "noEmit": true
   },
   "include": ["src"],
