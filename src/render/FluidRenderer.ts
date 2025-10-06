@@ -86,6 +86,7 @@ export class FluidRenderer {
   private gradientData: Uint8Array;
   private gradientClamped: Uint8ClampedArray;
   private dyeUpload = new Uint8Array(0);
+  private dyeRowPitch = 0;
 
   private webgpuReady = false;
   private lastFieldSize = 0;
@@ -279,11 +280,12 @@ export class FluidRenderer {
     this.writeUniformBuffer(field.size);
 
     const pixels = this.prepareDyeUpload(field);
-    if (this.dyeTexture) {
+    const rowPitch = this.dyeRowPitch;
+    if (this.dyeTexture && rowPitch > 0) {
       this.device.queue.writeTexture(
         { texture: this.dyeTexture },
         pixels as BufferSource,
-        { bytesPerRow: field.size * 4 },
+        { bytesPerRow: rowPitch },
         { width: field.size, height: field.size, depthOrArrayLayers: 1 }
       );
     }
@@ -449,19 +451,26 @@ export class FluidRenderer {
 
   private prepareDyeUpload(field: DyeField): Uint8Array {
     const { size, data } = field;
-    const total = size * size * 4;
-    if (this.dyeUpload.length !== total) {
-      this.dyeUpload = new Uint8Array(total);
+    const bytesPerPixel = 4;
+    const rowPitch = Math.max(bytesPerPixel, Math.ceil((size * bytesPerPixel) / 256) * 256);
+    const requiredSize = rowPitch * size;
+    if (this.dyeUpload.length !== requiredSize) {
+      this.dyeUpload = new Uint8Array(requiredSize);
     }
 
+    this.dyeRowPitch = rowPitch;
     const pixels = this.dyeUpload;
-    for (let i = 0; i < data.length; i++) {
-      const value = Math.min(255, Math.max(0, Math.floor(data[i] * 255)));
-      const idx = i * 4;
-      pixels[idx] = value;
-      pixels[idx + 1] = value;
-      pixels[idx + 2] = value;
-      pixels[idx + 3] = 255;
+    let srcIndex = 0;
+    for (let y = 0; y < size; y++) {
+      const rowOffset = y * rowPitch;
+      for (let x = 0; x < size; x++, srcIndex++) {
+        const value = Math.min(255, Math.max(0, Math.floor(data[srcIndex] * 255)));
+        const idx = rowOffset + x * bytesPerPixel;
+        pixels[idx] = value;
+        pixels[idx + 1] = value;
+        pixels[idx + 2] = value;
+        pixels[idx + 3] = 255;
+      }
     }
     return pixels;
   }
