@@ -49,6 +49,14 @@ export class App {
       this.fluid.reset();
     });
 
+    this.events.on('simulation:clearDye', () => {
+      this.fluid.clearDye();
+    });
+
+    this.events.on('simulation:clearVelocity', () => {
+      this.fluid.clearVelocity();
+    });
+
     this.events.on('presets:apply', (preset) => {
       this.paramStore.applyPreset(preset);
       this.fluid.updateConfig(this.paramStore.state.simulation);

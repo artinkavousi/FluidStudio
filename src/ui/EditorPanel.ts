@@ -45,6 +45,9 @@ export class EditorPanel {
     simFolder
       .addInput(simState, 'pressureIterations', { min: 5, max: 60, step: 1 })
       .on('change', (ev: TpChangeEvent<number>) => this.store.updateSimulation({ pressureIterations: ev.value }));
+    simFolder
+      .addInput(simState, 'curlStrength', { min: 0, max: 50, step: 1 })
+      .on('change', (ev: TpChangeEvent<number>) => this.store.updateSimulation({ curlStrength: ev.value }));
 
     const emitFolder = pane.addFolder({ title: 'Emitter' });
     const emitter = this.store.state.emitters.primary;
@@ -89,18 +92,22 @@ export class EditorPanel {
     audioFolder
       .addInput(audio, 'smoothing', { min: 0, max: 0.9, step: 0.05 })
       .on('change', (ev: TpChangeEvent<number>) => {
-        this.store.setAudioActive(true);
+        this.store.updateAudio({ smoothing: ev.value, active: true });
         this.analyser.setSmoothing(ev.value);
       });
     audioFolder
       .addInput(audio, 'gain', { min: 0.1, max: 4, step: 0.1 })
       .on('change', (ev: TpChangeEvent<number>) => {
-        this.store.setAudioActive(true);
+        this.store.updateAudio({ gain: ev.value, active: true });
         this.analyser.setGain(ev.value);
       });
 
     const actionsFolder = pane.addFolder({ title: 'Actions' });
-    actionsFolder.addButton({ title: 'Clear Simulation' }).on('click', () => this.events.emit('simulation:reset', undefined));
+    actionsFolder.addButton({ title: 'Clear Dye' }).on('click', () => this.events.emit('simulation:clearDye', undefined));
+    actionsFolder
+      .addButton({ title: 'Clear Velocity' })
+      .on('click', () => this.events.emit('simulation:clearVelocity', undefined));
+    actionsFolder.addButton({ title: 'Reset Simulation' }).on('click', () => this.events.emit('simulation:reset', undefined));
 
     const presetsFolder = pane.addFolder({ title: 'Presets' });
     presetsFolder

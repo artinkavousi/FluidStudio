@@ -3,6 +3,8 @@ import type { Preset } from '../presets/types';
 
 export type AppEventMap = {
   'simulation:reset': void;
+  'simulation:clearDye': void;
+  'simulation:clearVelocity': void;
   'presets:apply': Preset;
   'render:mode': RenderingParameters['mode'];
 };
